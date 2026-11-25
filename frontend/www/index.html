@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>G4 · Observabilité applicative — OpenTelemetry &amp; Jaeger</title>
+  <link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="grid-bg"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2.5-7 5 14 2.5-7h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="brand-text">G4 <b>Observabilité</b></span>
+      <span class="brand-tag">OTel · Jaeger · Grafana</span>
+    </div>
+    <nav class="topnav" aria-label="Interfaces">
+      <a id="link-jaeger" href="#" target="_blank" rel="noreferrer">Jaeger <svg class="icon-ext" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a id="link-grafana" href="#" target="_blank" rel="noreferrer">Grafana <svg class="icon-ext" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a id="link-prometheus" href="#" target="_blank" rel="noreferrer">Prometheus <svg class="icon-ext" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a id="link-mailpit" href="#" target="_blank" rel="noreferrer">Mailpit <svg class="icon-ext" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow"><span class="dot"></span> PROJET D'EXPERTISE · L3 SI · 2026—2027</div>
+      <h1>Les traces distribuées, <em>à la milliseconde près.</em></h1>
+      <p class="lead">
+        Chaque action ci-dessous crée une trace complète : navigateur → API Flask → PostgreSQL.
+        Le Collector OpenTelemetry agrège les spans et Jaeger restitue la cascade d'appels.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="btn-order">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Nouvelle commande
+        </button>
+        <button class="btn" id="btn-burst">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          Trafic soutenu ×10
+        </button>
+        <button class="btn" id="btn-health">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Vérifier la santé
+        </button>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Indicateurs temps réel">
+      <article class="stat"><div class="stat-label">Requêtes générées</div><div class="stat-value" id="stat-requests">0</div><div class="stat-foot">depuis l'ouverture de la page</div></article>
+      <article class="stat"><div class="stat-label">Commandes en base</div><div class="stat-value" id="stat-orders">—</div><div class="stat-foot">PostgreSQL · shopdb</div></article>
+      <article class="stat"><div class="stat-label">Dernière latence</div><div class="stat-value" id="stat-latency">—<small> ms</small></div><div class="stat-foot">mesurée côté navigateur</div></article>
+      <article class="stat"><div class="stat-label">Erreurs</div><div class="stat-value" id="stat-errors">0</div><div class="stat-foot">réponses ≥ 400</div></article>
+    </section>
+
+    <section class="columns">
+      <article class="card">
+        <div class="card-head"><h2>Exploration des données</h2><span class="chip">API REST</span></div>
+        <p class="card-desc">Générez du trafic nominal et observez immédiatement les spans dans Jaeger.</p>
+        <div class="button-grid">
+          <button class="btn btn-soft" id="btn-users">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/><path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Lire les utilisateurs
+          </button>
+          <button class="btn btn-soft" id="btn-orders">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Lire les commandes
+          </button>
+        </div>
+        <div class="last-result" id="last-result">En attente d'une requête…</div>
+      </article>
+
+      <article class="card trace-card">
+        <div class="card-head"><h2>Trace ID courant</h2><span class="chip chip-live"><span class="dot"></span> live</span></div>
+        <p class="card-desc">Le même identifiant est présent dans la réponse HTTP, les logs Flask et Jaeger.</p>
+        <div class="trace-id" id="trace-id">00000000000000000000000000000000</div>
+        <div class="trace-meta">
+          <span>Mode : <b id="chaos-mode">nominal</b></span>
+          <span>Span navigateur : <b id="span-id">—</b></span>
+        </div>
+        <a class="btn btn-primary btn-wide" id="open-jaeger" href="#" target="_blank" rel="noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ouvrir la trace dans Jaeger
+        </a>
+      </article>
+    </section>
+
+    <section class="card pipeline">
+      <div class="card-head"><h2>Chaîne d'observation</h2><span class="chip">3 services + observabilité</span></div>
+      <div class="pipeline-flow">
+        <div class="node">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/></svg>
+          <b>Navigateur</b><small>span racine W3C</small>
+        </div>
+        <div class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="node">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <b>API Flask</b><small>traces + métriques RED</small>
+        </div>
+        <div class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="node">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3" stroke="currentColor" stroke-width="2"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3" stroke="currentColor" stroke-width="2"/></svg>
+          <b>PostgreSQL</b><small>spans SQL</small>
+        </div>
+        <div class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="node accent">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <b>Collector</b><small>OTLP gRPC / HTTP</small>
+        </div>
+        <div class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="node accent">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <b>Jaeger</b><small>cascade d'appels</small>
+        </div>
+      </div>
+      <div class="pipeline-foot">Prometheus scrape le Collector et l'API → Alertmanager → Mailpit → Grafana (2 dashboards).</div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Journal d'événements</h2><span class="chip">temps réel</span></div>
+      <ul class="log" id="log-list"><li class="log-empty">Les événements apparaîtront ici.</li></ul>
+    </section>
+  </main>
+
+  <footer>L3 SI · IFRI/UAC · Outils de monitoring — Groupe 4 · OpenTelemetry + Jaeger</footer>
+
+  <script src="config.js?v=3"></script>
+  <script src="otel-browser.js?v=3"></script>
+  <script src="app.js?v=3"></script>
+</body>
+</html>

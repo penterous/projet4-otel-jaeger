@@ -1,0 +1,66 @@
+# Collecteur OpenTelemetry Contrib — pipeline traces + métriques dérivées (RED)
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - http://localhost:18080
+            - http://127.0.0.1:18080
+          allowed_headers:
+            - content-type
+            - traceparent
+            - x-requested-with
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 75
+    spike_limit_percentage: 20
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: lab
+        action: upsert
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+
+connectors:
+  spanmetrics:
+    metrics_flush_interval: 10s
+    dimensions:
+      - name: http.route
+      - name: http.response.status_code
+
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    add_metric_suffixes: false
+  debug:
+    verbosity: basic
+
+service:
+  telemetry:
+    logs:
+      level: info
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/jaeger, spanmetrics, debug]
+    metrics/spanmetrics:
+      receivers: [spanmetrics]
+      processors: [batch]
+      exporters: [prometheus]
+    metrics/app:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]

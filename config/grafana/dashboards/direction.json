@@ -1,0 +1,109 @@
+{
+  "uid": "g4-direction",
+  "title": "Vue Direction — Synthèse Métier",
+  "description": "Vue synthétique pour la direction : disponibilité, SLO, volume d'affaires et santé globale.",
+  "tags": ["g4", "direction", "slo"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "Synthèse exécutive",
+      "gridPos": {"h": 3, "w": 24, "x": 0, "y": 0},
+      "options": {
+        "mode": "markdown",
+        "content": "### Vue Direction — OpenTelemetry + Jaeger\nIndicateurs métier et disponibilité de la plateforme de commande. Les données proviennent des spans instrumentés (API Flask, PostgreSQL) et des métriques RED. Pour le diagnostic technique détaillé, ouvrir le dashboard **Vue Exploitation**."
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Disponibilité (1 h)",
+      "description": "Part des requêtes non-5xx sur la dernière heure (SLO : 99 %).",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 3},
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "decimals": 2, "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "orange", "value": 95}, {"color": "green", "value": 99}]}},
+        "overrides": []
+      },
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"refId": "A", "expr": "100 * (1 - (sum(increase(http_requests_total{status=~\"5..\"}[1h])) / clamp_min(sum(increase(http_requests_total[1h])), 1)))", "legendFormat": "disponibilité"}]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Débit (req/min)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 3},
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 1, "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}}, "overrides": []},
+      "options": {"colorMode": "value", "graphMode": "area", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}},
+      "targets": [{"refId": "A", "expr": "sum(rate(http_requests_total[5m])) * 60", "legendFormat": "req/min"}]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Commandes (1 h)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 3},
+      "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
+      "options": {"colorMode": "value", "graphMode": "area", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}},
+      "targets": [{"refId": "A", "expr": "sum(increase(app_orders_total{status=\"success\"}[1h]))", "legendFormat": "commandes"}]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Alertes en cours",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 3},
+      "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 1}, {"color": "red", "value": 3}]}}, "overrides": []},
+      "options": {"colorMode": "value", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}},
+      "targets": [{"refId": "A", "expr": "sum(ALERTS{alertstate=\"firing\"})", "legendFormat": "firing"}]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Taux de succès HTTP (%)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 7},
+      "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "color": {"mode": "palette-classic"}, "custom": {"axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never", "spanNulls": true, "stacking": {"mode": "none", "group": "A"}}}, "overrides": []},
+      "options": {"legend": {"calcs": ["mean", "min"], "displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"refId": "A", "expr": "100 * sum(rate(http_requests_total{status!~\"5..\"}[1m])) / clamp_min(sum(rate(http_requests_total[1m])), 0.001)", "legendFormat": "succès"}]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Activité commerciale (commandes/min)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 7},
+      "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "palette-classic"}, "custom": {"axisPlacement": "auto", "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1, "showPoints": "never", "spanNulls": true, "stacking": {"mode": "normal", "group": "A"}}}, "overrides": []},
+      "options": {"legend": {"calcs": ["sum"], "displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"refId": "A", "expr": "sum by (status) (increase(app_orders_total[1m]))", "legendFormat": "{{status}}"}]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Disponibilité des composants (up)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"h": 7, "w": 24, "x": 0, "y": 15},
+      "fieldConfig": {"defaults": {"unit": "short", "min": 0, "max": 1, "color": {"mode": "palette-classic"}, "custom": {"axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 8, "lineWidth": 2, "showPoints": "never", "spanNulls": true, "stacking": {"mode": "none", "group": "A"}}}, "overrides": []},
+      "options": {"legend": {"calcs": ["min", "mean"], "displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"refId": "A", "expr": "up", "legendFormat": "{{job}}"}]
+    },
+    {
+      "id": 9,
+      "type": "text",
+      "title": "Objectifs de niveau de service (SLO)",
+      "gridPos": {"h": 5, "w": 24, "x": 0, "y": 22},
+      "options": {
+        "mode": "markdown",
+        "content": "| Indicateur | Objectif | Mesure |\n|---|---|---|\n| Disponibilité API | ≥ 99 % sur 1 h | Taux de réponses non-5xx |\n| Latence p95 | < 1 s | Histogramme `http_request_duration_seconds` |\n| Détection d'incident | < 1 min | `for` des alertes critique |\n| Notification | < 30 s | Alertmanager → Mailpit |\n\n**Accès rapide :** [Jaeger](http://localhost:18686) · [Vue Exploitation](http://localhost:13000/d/g4-exploitation) · [Mailpit](http://localhost:18025)"
+      }
+    }
+  ]
+}

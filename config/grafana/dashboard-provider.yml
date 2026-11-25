@@ -1,0 +1,14 @@
+apiVersion: 1
+
+providers:
+  - name: "G4 — Dashboards provisionnés"
+    orgId: 1
+    folder: "Groupe 4 — Observabilité"
+    folderUid: g4-observabilite
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

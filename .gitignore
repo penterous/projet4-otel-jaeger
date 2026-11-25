@@ -1,0 +1,21 @@
+# Secrets et fichiers générés
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Données runtime (volumes locaux si utilisés)
+data/
+*.log
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.idea/
+.vscode/
