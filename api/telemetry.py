@@ -42,9 +42,9 @@ def configure_telemetry() -> None:
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
 
-    FlaskInstrumentor().instrument()
-    Psycopg2Instrumentor().instrument()
-    LoggingInstrumentor().instrument(set_logging_format=True)
+    FlaskInstrumentor().instrument() # crée un span pour chaque requête HTTP
+    Psycopg2Instrumentor().instrument() # crée un span pour chaque requête SQL
+    LoggingInstrumentor().instrument(set_logging_format=True) # injecte le trace_id dans chaque log
 
     _configured = True
 

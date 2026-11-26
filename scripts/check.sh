@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
 # Vérification complète de la stack après docker compose up -d.
 set -uo pipefail
 

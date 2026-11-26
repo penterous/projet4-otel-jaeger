@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
+if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
 # Démarrage guidé : prépare .env, valide la configuration, lance la stack et vérifie.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-if [[ ! -f .env ]]; then
-  echo "[INFO] .env absent — génération des secrets."
-  ./scripts/bootstrap.sh
+if [[ ! -s .env ]] || grep -q 'EXAMPLE_CHANGE_ME' .env; then
+  echo "[INFO] .env absent ou incomplet — génération des secrets."
+  FORCE=1 ./scripts/bootstrap.sh
 else
   echo "[INFO] .env présent — conservation des secrets existants."
 fi

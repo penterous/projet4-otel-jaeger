@@ -12,7 +12,9 @@ cd projet4-otel-jaeger
 ./scripts/scenario.sh       # épreuve du feu : trafic, latence SQL, 500, brute-force, alertes
 ```
 
-`start.sh` est le point d'entrée recommandé. Il équivaut à :
+`start.sh` est le point d'entrée recommandé, même appelé avec `sh scripts/start.sh`.
+Il régénère `.env` s'il est absent, vide ou contient encore `EXAMPLE_CHANGE_ME_*`,
+et recrée `.env.example` si ce fichier caché a été perdu lors d'une copie. Il équivaut à :
 
 ```bash
 ./scripts/bootstrap.sh      # génère .env avec 5 secrets aléatoires (droits 600)

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
 # ---------------------------------------------------------------------------
 # Épreuve du feu — Groupe 4 (OpenTelemetry + Jaeger)
 #  1. Trafic nominal       -> traces saines
@@ -96,7 +97,7 @@ ok "API prête"
 phase "PHASE 1 — Trafic nominal : cascade saine Navigateur → API → PostgreSQL"
 set_mode nominal
 for i in $(seq 1 8); do
-  result="$(call POST /api/checkout "{\"user_id\":$((i % 5 + 1)),\"amount\":$((20 + i * 7)).50}")"
+  result="$(call POST /api/checkout "{\"user_id\":$((i % 5 + 1)),\"amount\":$((5000 + i * 1500))}")"
   record "${result%% *}" "${result##* }" "commande #$i"
   sleep 0.2
 done
@@ -115,7 +116,7 @@ warn "Regarder le span db.query : db.duration.ms ≈ 3000, db.statement = INSERT
 phase "PHASE 3 — Injection d'une exception non gérée (HTTP 500)"
 set_mode error
 for i in 1 2 3 4 5; do
-  result="$(call POST /api/checkout '{"user_id":3,"amount":75.00}')"
+  result="$(call POST /api/checkout '{"user_id":3,"amount":75000}')"
   record "${result%% *}" "${result##* }" "commande en erreur #$i"
 done
 warn "Dans Jaeger : span checkout en rouge + événement exception avec traceback"
