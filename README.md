@@ -121,3 +121,23 @@ docs/                    architecture, playbook, démo, rapport
 
 En cas d'échec : `docker compose logs --tail=50 <service>` puis
 `docker compose ps` pour identifier le conteneur fautif.
+
+
+## Dépannage sous Linux
+
+### Problème de permission Docker
+Sur certaines distributions Linux, l'exécution des commandes Docker peut nécessiter des privilèges administrateur.
+Si le terminal affiche une erreur de permission concernant /var/run/docker.sock, utiliser sudo :
+
+```bash
+sudo docker compose ps
+sudo docker compose logs --tail=50 api
+sudo ./scripts/check.sh
+```
+Pour éviter d'utiliser sudo à chaque commande, il est également possible d'ajouter son utilisateur au groupe docker :
+```bash
+sudo usermod -aG docker $USER
+```
+Une déconnexion puis une reconnexion sont nécessaires pour appliquer le changement.
+
+Attention : l'appartenance au groupe docker donne des privilèges très élevés sur la machine.
