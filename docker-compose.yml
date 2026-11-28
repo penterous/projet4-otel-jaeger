@@ -38,10 +38,6 @@ services:
     build: ./api
     container_name: g4-api
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
     depends_on:
       postgres:
         condition: service_healthy
@@ -102,8 +98,6 @@ services:
     image: otel/opentelemetry-collector-contrib:0.113.0
     container_name: g4-otel-collector
     restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
     command: ["--config=/etc/otel/config.yaml"]
     volumes:
       - ./config/otel-collector/otel-collector-config.yaml:/etc/otel/config.yaml:ro
