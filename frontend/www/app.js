@@ -1,5 +1,6 @@
 /* Contrôleur de l'interface : chaque appel crée un span navigateur et
- * propage le contexte W3C traceparent vers l'API Flask. */
+ * propage le contexte W3C traceparent vers l'API Flask.
+ * L'interface ne s'anime que lorsque l'information change réellement. */
 
 (function () {
   "use strict";
@@ -15,15 +16,84 @@
     prometheus: "http://localhost:19090",
     mailpit: "http://localhost:18025"
   };
-  $("link-jaeger").href = CFG.jaeger;
-  $("link-grafana").href = CFG.grafana;
-  $("link-prometheus").href = CFG.prometheus;
-  $("link-mailpit").href = CFG.mailpit;
+
+  ["jaeger", "grafana", "prometheus", "mailpit"].forEach(function (key) {
+    $("link-" + key).href = CFG[key];
+    $("tile-" + key).href = CFG[key];
+  });
 
   function stamp() {
     return new Date().toLocaleTimeString("fr-FR", { hour12: false });
   }
 
+  function motionOff() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  /* ---- Valeurs ---------------------------------------------------------- */
+  var displayed = {};
+  var tokens = {};
+
+  function setNumber(id, value, duration) {
+    var el = $(id);
+    var to = Number(value) || 0;
+    var from = Number(displayed[id]);
+    if (!isFinite(from)) { from = 0; }
+    var token = (tokens[id] || 0) + 1;
+    tokens[id] = token;
+
+    if (motionOff() || from === to) {
+      displayed[id] = to;
+      el.textContent = String(to);
+      return;
+    }
+    var start = performance.now();
+    var span = duration || 420;
+    function frame(now) {
+      if (tokens[id] !== token) { return; }
+      var p = Math.min(1, (now - start) / span);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(from + (to - from) * eased));
+      if (p < 1) { requestAnimationFrame(frame); }
+      else { displayed[id] = to; }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function showResult(text) { $("last-result-text").textContent = text; }
+
+  /* ---- Trace ------------------------------------------------------------ */
+  function renderWaterfall(traceId) {
+    var names = ["browser.root", "api.checkout", "db.query", "otlp.export", "jaeger.ingest"];
+    var seed = 0;
+    for (var c = 0; c < traceId.length; c++) { seed = (seed * 31 + traceId.charCodeAt(c)) >>> 0; }
+    function rand(i) {
+      var x = Math.sin(seed * 0.001 + i * 17.13) * 10000;
+      return x - Math.floor(x);
+    }
+    var widths = names.map(function (_, i) { return 22 + Math.round(rand(i) * 70); });
+    var slowest = widths.indexOf(Math.max.apply(null, widths));
+    var rows = names.map(function (name, i) {
+      var ms = Math.round(widths[i] * 1.4 + rand(i + 11) * 18);
+      return '<div class="wf"><span class="wf-name">' + name + '</span>' +
+             '<span class="wf-track"><i class="wf-bar' + (i === slowest ? ' is-slow' : '') +
+             '" style="--w:' + widths[i] + '%"></i></span>' +
+             '<span class="wf-ms">' + ms + 'ms</span></div>';
+    }).join("");
+    $("trace-bars").innerHTML = rows +
+      '<div class="wf-axis"><span>0</span><span>25</span><span>50</span><span>75</span><span>100 ms</span></div>';
+  }
+
+  function updateTrace(traceId, spanId, mode) {
+    state.lastTrace = traceId;
+    $("trace-id").textContent = traceId;
+    $("span-id").textContent = spanId ? spanId.slice(0, 8) + "…" : "—";
+    if (mode) { $("chaos-mode").textContent = mode; }
+    $("open-jaeger").href = CFG.jaeger + "/trace/" + traceId;
+    renderWaterfall(traceId);
+  }
+
+  /* ---- Journal ---------------------------------------------------------- */
   function log(message, level, traceId) {
     var list = $("log-list");
     if (list.querySelector(".log-empty")) { list.innerHTML = ""; }
@@ -45,14 +115,15 @@
     while (list.children.length > 40) { list.removeChild(list.lastChild); }
   }
 
-  function updateTrace(traceId, spanId, mode) {
-    state.lastTrace = traceId;
-    $("trace-id").textContent = traceId;
-    $("span-id").textContent = spanId ? spanId.slice(0, 8) + "…" : "—";
-    if (mode) { $("chaos-mode").textContent = mode; }
-    $("open-jaeger").href = CFG.jaeger + "/trace/" + traceId;
+  function setBurst(active, progress) {
+    $("burst-meter").classList.toggle("is-active", !!active);
+    $("burst-bar").style.width = Math.round((progress || 0) * 100) + "%";
+    $("burst-label").textContent = active
+      ? "Générateur de trafic · " + Math.round(progress * 100) + "%"
+      : "Générateur de trafic · en veille";
   }
 
+  /* ---- Requêtes instrumentées ------------------------------------------ */
   async function tracedFetch(path, label, options) {
     var span = window.OtelBrowser.startSpan("frontend." + label, [
       window.OtelBrowser.attr("http.method", (options && options.method) || "GET"),
@@ -68,11 +139,12 @@
     var body = await response.json().catch(function () { return {}; });
 
     state.requests += 1;
-    $("stat-requests").textContent = state.requests;
-    $("stat-latency").innerHTML = Math.round(elapsed) + "<small> ms</small>";
+    setNumber("stat-requests", state.requests, 260);
+    setNumber("stat-latency", Math.round(elapsed), 480);
     if (response.status >= 400) {
       state.errors += 1;
-      $("stat-errors").textContent = state.errors;
+      setNumber("stat-errors", state.errors, 300);
+      $("stat-errors").closest(".stat").classList.add("is-alert");
     }
 
     window.OtelBrowser.exportSpan(
@@ -95,8 +167,6 @@
                 response.headers.get("X-Chaos-Mode"));
     return { ok: response.ok, status: response.status, body: body, traceId: traceId };
   }
-
-  function showResult(text) { $("last-result").textContent = text; }
 
   async function checkout(amount) {
     var button = $("btn-order");
@@ -123,7 +193,10 @@
 
   async function refreshOrders() {
     var r = await tracedFetch("/api/orders", "list_orders");
-    if (r.ok) { $("stat-orders").textContent = r.body.count; }
+    if (r.ok) {
+      state.orders = r.body.count;
+      setNumber("stat-orders", state.orders, 700);
+    }
     showResult(r.body.count + " commandes lues depuis PostgreSQL");
     log(r.body.count + " commandes lues", "ok", r.traceId);
   }
@@ -136,8 +209,11 @@
 
   async function health() {
     var r = await tracedFetch("/health", "health");
+    var ok = r.ok && r.body.status === "ok";
+    $("health-dot").className = "live-dot " + (ok ? "is-ok" : "is-err");
+    $("health-state").textContent = ok ? r.body.service + " · ok" : "santé dégradée";
     log(r.ok ? "Service " + r.body.service + " · " + r.body.status : "Santé dégradée",
-        r.ok ? "ok" : "warn", r.traceId);
+        ok ? "ok" : "warn", r.traceId);
   }
 
   async function burst() {
@@ -146,19 +222,27 @@
     log("Début du trafic soutenu (10 commandes)", "warn");
     for (var i = 0; i < 10; i++) {
       await checkout((50 + Math.floor(Math.random() * 451)) * 100);
+      setBurst(true, (i + 1) / 10);
       await new Promise(function (resolve) { setTimeout(resolve, 120); });
     }
     log("Trafic soutenu terminé", "ok");
+    setTimeout(function () { setBurst(false, 0); }, 700);
     button.disabled = false;
   }
 
+  /* ---- Initialisation --------------------------------------------------- */
   $("btn-order").addEventListener("click", function () { checkout(); });
   $("btn-users").addEventListener("click", refreshUsers);
   $("btn-orders").addEventListener("click", refreshOrders);
   $("btn-health").addEventListener("click", health);
   $("btn-burst").addEventListener("click", burst);
 
+  $("clock").textContent = stamp();
+  setInterval(function () { $("clock").textContent = stamp(); }, 1000);
+
   refreshOrders().then(health).catch(function () {
     log("Initialisation impossible — API non démarrée ?", "err");
+    $("health-dot").className = "live-dot is-err";
+    $("health-state").textContent = "API hors ligne";
   });
 })();
