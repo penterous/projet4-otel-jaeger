@@ -265,16 +265,14 @@ def admin_login():
     payload = request.get_json(silent=True) or {}
     username = str(payload.get("username", ""))
     password = str(payload.get("password", ""))
-    client_ip = request.remote_addr or "unknown"
     span = trace.get_current_span()
     span.set_attribute("app.user.login", username)
     span.set_attribute("app.security.event", "login_attempt")
-    span.set_attribute("app.client.ip", client_ip)
 
     if username != "observadmin" or password != ADMIN_PASSWORD:
         AUTH_FAILURES.labels(route="/api/admin/login", reason="bad_credentials").inc()
         span.set_attribute("app.auth.success", False)
-        span.add_event("auth.failure", {"app.user.login": username, "app.client.ip": client_ip})
+        span.add_event("auth.failure", {"app.user.login": username})
         return jsonify({"error": "unauthorized", "trace_id": current_trace_id()}), 401
 
     span.set_attribute("app.auth.success", True)

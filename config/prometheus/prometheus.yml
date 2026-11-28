@@ -7,8 +7,7 @@ global:
 
 rule_files:
   - /etc/prometheus/alert_rules.yml
-# Routage des alertes évaluées depuis /etc/prometheus/alert_rules.yml
-# vers Alertmanager (qui gère l'inhibition critical -> warning et l'envoi SMTP vers Mailpit)
+
 alerting:
   alertmanagers:
     - static_configs:

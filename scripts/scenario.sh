@@ -153,10 +153,10 @@ for a in data:
         a["labels"].get("alertname", "?"), a["state"], a["labels"].get("severity", "?")))
 ' 2>/dev/null || warn "Impossible d'interroger Prometheus (curl -u $AUTH_USER ...)"
 
-printf '\n  %sE-mails reçus dans Mailpit :%s\n' "$C_BOLD" "$C_RESET"
+printf '\n  %sE-mails reçus dans Mailpit a cet instant (Firing) :%s\n' "$C_BOLD" "$C_RESET"
 MAIL_COUNT="$(curl -fsS -u "$AUTH_CREDENTIALS" "${MAIL_URL}/api/v1/messages" \
-  | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' 2>/dev/null || echo '?')"
-printf '    %s message(s)\n' "$MAIL_COUNT"
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["messages_count"])' 2>/dev/null || echo '?')"
+printf '    %s message(s) ; les Resolved arrivent 1 a 2 min plus tard.\n' "$MAIL_COUNT"
 
 # ---------------------------------------------------------------------------
 phase "RÉSULTAT — à copier dans Jaeger (Search by Trace ID)"
@@ -169,5 +169,5 @@ printf '    Grafana      http://localhost:%s   (%s/%s)\n' "${PORT_GRAFANA:-13000
 printf '    Prometheus   http://localhost:%s   (%s/%s)\n' "${PORT_PROMETHEUS:-19090}" "$AUTH_USER" "$AUTH_PASSWORD"
 printf '    Alertmanager http://localhost:%s   (%s/%s)\n' "${PORT_ALERTMANAGER:-19093}" "$AUTH_USER" "$AUTH_PASSWORD"
 printf '    Mailpit      http://localhost:%s   (%s/%s)\n' "${PORT_MAILPIT_UI:-18025}" "$AUTH_USER" "$AUTH_PASSWORD"
-printf '\n  %sAstuce :%s ./scripts/reset.sh pour repartir d un état propre.\n' "$C_BOLD" "$C_RESET"
+printf '\n  %sAstuce :%s ./scripts/reset.sh pour repartir propre ; 8 mails apres 1-2 min.\n' "$C_BOLD" "$C_RESET"
 printf '\n'
